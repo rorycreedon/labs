@@ -54,7 +54,9 @@ def ridge_closed ( X, y, l2=0 ):
     assert(X.shape[0]==len(y))
     
     # TODO: implement this
-    return None
+    w = np.linalg.inv(X.T @ X + l2* np.identity(X.shape[1])) @ (X.T @ y)
+
+    return w
 
 
 # -- Question 2 --
@@ -79,7 +81,11 @@ def monomial_projection_1d ( X, degree ):
     assert(X.shape[1]==1)
 
     # TODO: implement this
-    return None
+    Xm=X
+    for i in range(0,degree+1):
+        Xm = np.append(Xm,X**i, axis=1)
+
+    return Xm[:,1:]
 
 
 def generate_noisy_poly_1d ( num_samples, weights, sigma, limits, rng ):
@@ -108,7 +114,10 @@ def generate_noisy_poly_1d ( num_samples, weights, sigma, limits, rng ):
         y: a vector of num_samples output values
     """
     # TODO: implement this
-    return None, None
+    return utils.random_sample(
+        lambda x: utils.affine(
+            monomial_projection_1d(x, len(weights)-1), weights),
+        1, num_samples, limits, rng, sigma)
 
     
 def fit_poly_1d ( X, y, degree, l2=0 ):
@@ -131,7 +140,10 @@ def fit_poly_1d ( X, y, degree, l2=0 ):
     assert(X.shape[0]==len(y))
 
     # TODO: implement this
-    return None
+    Xm = monomial_projection_1d(X, degree)
+    w = np.linalg.inv(Xm.T @ Xm + l2* np.identity(Xm.shape[1])) @ (Xm.T @ y)
+    
+    return w
 
 
 
@@ -167,8 +179,36 @@ def gradient_descent ( z, loss_func, grad_func, lr=0.01,
         zs: a list of the z values at each iteration
         losses: a list of the losses at each iteration
     """
-    # TODO: implement this
-    return None, None
+    
+    # Empty lists
+    zs = [z]
+    losses = [loss_func(z)]
+
+    # Params for loop
+    iters = 1
+    loss_change = abs(loss_stop) + 1
+    z_change = abs(z_stop) + 1
+
+    # Looping thorugh each iteration
+    while iters < max_iter and abs(loss_change) >= abs(loss_stop) and abs(z_change) >= abs(z_stop):
+        
+        # Calculate local loss gradient
+        gradient = grad_func(z)
+        
+        # Travel distance down that gradient
+        z_old = z
+        z = z_old - lr*gradient
+        z_change = np.linalg.norm(-lr*gradient)
+        zs.append(z)
+
+        # Calculate new loss
+        loss_change = loss_func(z) - loss_func(z_old)
+        losses.append(loss_func(z))
+
+        # Next iteration
+        iters +=1
+
+    return zs, losses
 
 
 # -- Question 4 --
@@ -203,7 +243,19 @@ def logistic_regression ( X, y, w0=None, lr=0.05,
     assert(X.shape[0]==len(y))
     
     # TODO: implement this
-    return None, None
+
+    if w0 is None:
+        w0 = np.array([i*0 for i in range(X.shape[1])])
+
+    def loss_func(w0):
+        yhat = 1/(1+np.exp(-X.dot(w0)))
+        return (-1/len(y)) * (y.dot(np.log(yhat + 1e-10)) + (1-y).dot(np.log(1-yhat + 1e-10)))
+
+    def grad_func(w0):
+        yhat = 1/(1+np.exp(-X.dot(w0)))
+        return X.T.dot(yhat - y)
+
+    return gradient_descent(w0, loss_func, grad_func, lr, loss_stop, weight_stop, max_iter)
 
 
 #### plotting utilities

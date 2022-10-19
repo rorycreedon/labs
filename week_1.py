@@ -34,7 +34,6 @@ import utils
 #### ADD YOUR CODE BELOW
 
 # -- Question 1 --
-
 def generate_noisy_linear(num_samples, weights, sigma, limits, rng):
     """
     Draw samples from a linear model with additive Gaussian noise.
@@ -59,9 +58,8 @@ def generate_noisy_linear(num_samples, weights, sigma, limits, rng):
               num_samples x (len(weights) - 1)
         y: a vector of num_samples output values
     """
-    
-    # TODO: implement this
-    return None, None
+
+    return utils.random_sample(lambda x: utils.affine(x, weights), len(weights)-1, num_samples, limits, rng, sigma)
 
 
 def plot_noisy_linear_1d(axes, num_samples, weights, sigma, limits, rng):
@@ -89,7 +87,20 @@ def plot_noisy_linear_1d(axes, num_samples, weights, sigma, limits, rng):
     X, y = generate_noisy_linear(num_samples, weights, sigma, limits, rng)
     
     # TODO: do the plotting
-    utils.plot_unimplemented ( axes, 'Noisy 1D Linear Model' )
+    # Raw data with noise
+    axes.plot(X, y, color='blue', marker='o', linestyle='', label='Noisy Sample', alpha=0.5)
+    
+    # Without noise
+    y0 = weights[0] + limits[0] * weights[1]
+    y1 = weights[0] + limits[1] * weights[1]
+    axes.plot(limits, (y0, y1), linestyle='dashed', color='red', marker='')
+
+    # Adding titles and labels
+    axes.set_title('Noisy 1D Linear Model')
+    axes.set_xlabel('x')    
+    axes.set_ylabel('y')
+
+    #utils.plot_unimplemented ( axes, 'Noisy 1D Linear Model' )
 
 
 def plot_noisy_linear_2d(axes, resolution, weights, sigma, limits, rng):
@@ -113,6 +124,7 @@ def plot_noisy_linear_2d(axes, resolution, weights, sigma, limits, rng):
     assert(len(weights)==3)
     
     # TODO: generate the data
+
     # TODO: do the plotting
     utils.plot_unimplemented ( axes, 'Noisy 2D Linear Model' )
 
@@ -144,7 +156,11 @@ def generate_linearly_separable(num_samples, weights, limits, rng):
         y: a vector of num_samples binary labels
     """
     # TODO: implement this
-    return None, None
+
+    X,y =  utils.random_sample(lambda x: utils.affine(x, weights), len(weights)-1, num_samples, limits, rng)
+    y_binary = np.array([1 if i>0 else 0 for i in y])
+
+    return X, y_binary
 
 
 
@@ -171,8 +187,17 @@ def plot_linearly_separable_2d(axes, num_samples, weights, limits, rng):
     X, y = generate_linearly_separable(num_samples, weights, limits, rng)
     
     # TODO: do the plotting
-    utils.plot_unimplemented ( axes, 'Linearly Separable Binary Data' )
+    axes.plot(X[y==0,0], X[y==0,1], color='red', marker='o', linestyle='', label='Class 0', alpha=0.5)
+    axes.plot(X[y==1,0], X[y==1,1], color='blue', marker='o', linestyle='', label='Class 1', alpha=0.5)
 
+    # Without noise
+    y0 = -(weights[0] + limits[0] * weights[1]) / weights[2]
+    y1 = -(weights[0] + limits[1] * weights[1]) / weights[2]
+    axes.plot(limits, (y0, y1), linestyle='dashed', color='red', marker='')
+
+    axes.set_title('Linearly Separable Binary Data')
+    axes.set_xlabel('$x_1$')
+    axes.set_ylabel('$x_2$')
 
 # -- Question 3 --
 
@@ -197,7 +222,9 @@ def random_search(function, count, num_samples, limits, rng):
     """
     
     # TODO: implement this
-    return None
+    X,y = utils.random_sample(function, count, num_samples, limits, rng)
+    loc = np.argmin(y)
+    return X[loc,]
 
 
 def grid_search(function, count, num_divisions, limits):
@@ -220,7 +247,8 @@ def grid_search(function, count, num_divisions, limits):
     """
     
     # TODO: implement this
-    return None
+    X, y = utils.grid_sample(function, count, num_divisions, limits, rng)
+    return X[np.unravel_index(np.argmin(y),y.shape)]
 
 
 def plot_searches_2d(axes, function, limits, resolution,
@@ -254,7 +282,8 @@ def plot_searches_2d(axes, function, limits, resolution,
     """
     
     # TODO: implement this
-    utils.plot_unimplemented ( axes, 'Sampling Search' )
+    X, y = utils.grid_sample(function, 2, resolution, limits)
+    axes.imshow(y.T, cmap='GnBu', origin='lower', extent=(limits[0], limits[1], limits[0], limits[1]) )
 
 
 
